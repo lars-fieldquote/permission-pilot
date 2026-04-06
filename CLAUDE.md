@@ -11,6 +11,17 @@ Use semantic versioning:
 - `minor` (0.1.0 → 0.2.0): new skills, agents, or hooks added
 - `major` (0.1.0 → 1.0.0): breaking changes to skill interface or hook behavior
 
+## Update workflow (after merging to main)
+
+Users picking up new versions must run all three steps:
+```
+/plugin marketplace update permission-pilot-marketplace
+/plugin install permission-pilot
+/reload-plugins
+```
+
+The marketplace cache is separate from the plugin cache — updating one without the other leaves stale data.
+
 ## Plugin structure
 
 Skills must use the subdirectory pattern — flat `.md` files are not picked up:
