@@ -38,6 +38,8 @@ Before generating the allow-list, ask these questions for contextual commands. A
 - If Docker present: "Is this Docker setup local dev only, or does it push images to a registry?"
 - If database migration files present: "Do migrations run automatically or do you trigger them manually?"
 
+Note: For `hardened` posture, skip questions about deploy scripts and Docker registries — these commands always prompt regardless of the answers.
+
 ## Step 4: Generate the allow-list
 
 Based on stack + posture + interview answers, reason about each command category:
@@ -48,6 +50,7 @@ Based on stack + posture + interview answers, reason about each command category
 - Package manager read operations: `npm list`, `pip list`, `cargo tree`
 
 **Safe for `loose` and `balanced`, prompt for `hardened`:**
+(Note: `loose` and `balanced` use identical allow-rules in this skill. The distinction matters more in `/permission-review` which applies looser pattern matching for `loose` posture.)
 - `npm install`, `pip install`, `cargo build` — dependency installation
 - `npm run <script>`, `make <target>` — project scripts (unless deploy confirmed to touch prod)
 - `docker-compose up`, `docker-compose down` — local containers (if confirmed local-only)
@@ -65,7 +68,7 @@ Based on stack + posture + interview answers, reason about each command category
 
 Output a ready-to-paste block with a comment for each entry explaining why it's allowed:
 
-```json
+```jsonc
 // permission-pilot: generated allow-list
 // Project: <detected stack> | Posture: <posture>
 // Add to ~/.claude/settings.json → permissions.allow
@@ -80,6 +83,6 @@ Output a ready-to-paste block with a comment for each entry explaining why it's 
 ```
 
 Then ask: "Want me to merge this into your `~/.claude/settings.json` now? (yes / show me first / no)"
-- If yes: read `~/.claude/settings.json`, merge the new entries into `permissions.allow` (avoid duplicates), write back
+- If yes: read `~/.claude/settings.json` (if it does not exist or has no `permissions` key, start from `{"permissions": {"allow": []}}`), merge the new entries into `permissions.allow` (avoid duplicates), write back
 - If "show me first": display the full updated permissions block, then ask: "Apply these changes? (yes / no)"
 - If no: leave as-is
