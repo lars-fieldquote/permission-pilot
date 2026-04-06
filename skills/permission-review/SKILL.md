@@ -78,28 +78,57 @@ Use the answers to move ambiguous patterns into the correct section.
 
 ## Step 7: Output recommendations
 
-```jsonc
+Output the analysis sections followed by a unified diff.
+
+### Risk levels
+
+Use these levels when labeling FRICTION and OVER-PERMISSIVE entries:
+
+**LOW** — read-only, no side effects, no network, no file mutation  
+Examples: `npm test`, `cargo build`, `git log`, `ls`
+
+**MEDIUM** — writes to local state, exposes local ports, or runs scripts with limited blast radius  
+Examples: `docker-compose up`, `npm run build`, `make`, `pip install`
+
+**HIGH** — network access, production-touching scripts, broad patterns, credential-adjacent paths  
+Examples: `./deploy.sh`, `psql`, `npm run *` (overly broad), `./scripts/*`
+
+### Analysis output
+
+```
 === Permission Review — <project> | Posture: <posture> ===
 
 FRICTION (consider allowing — blocked N times in last 30 days):
-  npm test          ran 47x, blocked 12x  → suggest: Bash(npm test*)
-  docker-compose up ran 23x, blocked  8x  → suggest: Bash(docker-compose up*)
+  npm test          blocked 12x  → Bash(npm test:*)           [LOW — standard test runner]
+  docker-compose up blocked  8x  → Bash(docker-compose up:*)  [MEDIUM — exposes network ports]
+  ./deploy.sh       blocked  3x  → Bash(./deploy.sh:*)        [HIGH — may touch production]
 
 OVER-PERMISSIVE (consider removing or tightening):
-  Bash(curl*)       → allowed but never triggered in 30 days
-  Bash(rm*)         → risky for 'balanced'; consider: Bash(rm ./tmp/*)
-
-READY-TO-PASTE — updated permissions.allow:
-[
-  ... current entries with changes applied ...
-]
-// Still prompting: rm*, git push*, curl*, docker push*
+  Bash(curl:*)    never triggered in 30 days                   [HIGH — unrestricted network]
+  Bash(npm run:*) triggered but pattern too broad for balanced  [MEDIUM — tighten to npm run test:*]
 ```
 
-Then ask: "Apply these changes to `~/.claude/settings.json`? (yes / show me first / no)"
-- If yes: read `~/.claude/settings.json` (if it does not exist or has no `permissions` key, start from `{"permissions": {"allow": []}}`), apply adds and removes, write back
-- If "show me first": display the full updated file, then ask: "Apply these changes? (yes / no)"
-- If no: leave as-is
+### Unified diff
+
+Display a diff (use a `diff` code block) showing all proposed changes in one view. `+` lines are friction additions, `-` lines are over-permissive removals. Include the risk level in each comment:
+
+```diff
+  permissions.allow (current → proposed)
+
++ "Bash(npm test:*)",            // friction: 12x blocked | LOW risk
++ "Bash(docker-compose up:*)",   // friction: 8x blocked | MEDIUM risk
+- "Bash(curl:*)",                // over-permissive: never triggered | HIGH risk
+- "Bash(npm run:*)",             // over-permissive: too broad for balanced | MEDIUM risk
+
+# still prompting: git push, rm, curl, docker push
+```
+
+### Prompt
+
+**`Apply? (yes / no / edit)`**
+- `yes` — apply adds and removes, write back to `~/.claude/settings.json`
+- `no` — leave as-is, done
+- `edit` — ask: "Which entries do you want to add, remove, or rename?" Accept natural language (e.g. "keep curl, drop docker-compose"). Apply changes, re-show updated diff, then prompt: `Apply? (yes / no)` — no further edit loop.
 
 ## Step 8: Mark entries as reviewed
 
