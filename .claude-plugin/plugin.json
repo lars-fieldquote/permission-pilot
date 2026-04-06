@@ -1,0 +1,12 @@
+{
+  "name": "permission-pilot",
+  "description": "Logs Claude Code tool usage and helps you tune a calibrated allow-list via /permission-init and /permission-review",
+  "version": "0.1.0",
+  "author": {
+    "name": "Lars Herrmann"
+  },
+  "homepage": "https://github.com/lars-fieldquote/permission-pilot",
+  "repository": "https://github.com/lars-fieldquote/permission-pilot",
+  "license": "MIT",
+  "keywords": ["permissions", "allow-list", "security", "logging", "hooks"]
+}
