@@ -15,7 +15,7 @@ Claude Code's permission system has no middle ground: default mode prompts const
 ## Install
 
 ```bash
-/plugin marketplace add github:lars-fieldquote/permission-pilot
+/plugin marketplace add lars-fieldquote/permission-pilot
 /plugin install permission-pilot
 ```
 
