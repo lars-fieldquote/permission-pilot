@@ -76,7 +76,7 @@ Based on stack + posture + interview answers, reason about each command category
    - `curl`, `wget` to external hosts
    - `docker push` (registry operations)
    - Anything touching `~/.ssh`, `~/.aws`, `~/.gnupg`
-   - Database migration commands (`migrate`, `alembic`, `prisma migrate deploy`)
+   - Database migration commands (`./migrate.sh`, `alembic upgrade`, `prisma migrate deploy`)
 
    Flagged entries get red `-` lines in the diff with a `DANGEROUS` label.
 
@@ -98,7 +98,9 @@ Based on stack + posture + interview answers, reason about each command category
 # withheld (always prompt): git push, rm, curl
 ```
 
+If an entry is both flagged as dangerous AND appears in the generated allow-list, show only the `-` DANGEROUS line — do not re-add it as a `+` line.
+
 5. Prompt: **`Apply? (yes / no / edit)`**
    - `yes` — remove flagged dangerous entries AND merge net-new entries into `permissions.allow` (no duplicates), write back to `~/.claude/settings.json`
    - `no` — leave as-is, done
-   - `edit` — ask: "Which entries do you want to add, remove, or rename?" Accept natural language (e.g. "keep curl, drop git add"). Apply the requested changes to the proposed diff (both additions and removals), re-display the updated diff, then prompt: `Apply? (yes / no)` — no further edit loop.
+   - `edit` — ask: "Which entries do you want to add, remove, or rename?" Accept natural language (e.g. "keep curl, drop git add"). Apply the requested changes to the proposed diff (both additions and removals), re-display the updated diff, then prompt: `Apply? (yes / no)` — no further edit loop. If the user chooses to keep a flagged entry, remove its DANGEROUS line from the diff and treat it as an unchanged context line.
