@@ -64,6 +64,8 @@ Based on stack + posture + interview answers, reason about each command category
 - Any command touching `~/.ssh`, `~/.aws`, `~/.gnupg`
 - Database migration commands (`./migrate.sh`, `alembic upgrade`, `prisma migrate deploy`)
 
+**Pattern convention:** All generated entries must use `Bash(<command>:*)` colon syntax (e.g. `Bash(git status:*)` not `Bash(git status*)`).
+
 ## Step 5: Show diff and apply
 
 1. Read `~/.claude/settings.json`. If it does not exist or has no `permissions` key, start from `{"permissions": {"allow": []}}`.
@@ -87,5 +89,3 @@ Based on stack + posture + interview answers, reason about each command category
    - `yes` — merge net-new entries into `permissions.allow` (no duplicates), write back to `~/.claude/settings.json`
    - `no` — leave as-is, done
    - `edit` — ask: "Which entries do you want to add, remove, or rename?" Accept natural language (e.g. "drop jq, rename the hooks entry to Bash(bash:*)"). Apply the requested changes to the net-new list, re-display the updated diff, then prompt: `Apply? (yes / no)` — no further edit loop.
-
-**Pattern convention:** All generated entries use `Bash(<command>:*)` colon syntax (e.g. `Bash(git status:*)` not `Bash(git status*)`). This matches the precision of typical existing entries and scopes the rule to the subcommand.
