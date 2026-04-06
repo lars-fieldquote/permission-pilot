@@ -14,11 +14,8 @@ Check for posture config in this order (first found wins):
 2. `~/.claude/permission-pilot.json`
 
 If neither exists:
-- Ask: "What security posture do you want for this project? (loose / balanced / hardened)"
-  - **loose**: solo dev, personal project — minimize interruptions, allow most things
-  - **balanced**: reasonable middle ground — allow common safe commands, prompt for risky ones
-  - **hardened**: production system or sensitive data — tight control, prompt for anything non-trivial
-- Save the answer to `~/.claude/permission-pilot.json` as `{"posture": "<answer>", "log_retention_days": 30}`
+- Default to `balanced`, save `{"posture": "balanced", "log_retention_days": 30}` to `~/.claude/permission-pilot.json`
+- Include this note in the output: "No posture config found — defaulting to balanced (saved to `~/.claude/permission-pilot.json`). To change globally, ask: 'set my permission-pilot posture to hardened'. To override for this project only, ask: 'set this project's posture to hardened'."
 
 ## Step 2: Identify the project stack
 
