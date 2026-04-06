@@ -70,22 +70,35 @@ Based on stack + posture + interview answers, reason about each command category
 
 1. Read `~/.claude/settings.json`. If it does not exist or has no `permissions` key, start from `{"permissions": {"allow": []}}`.
 
-2. Compute net-new entries: take the generated list and remove any entry already covered by an existing rule:
+2. Scan existing `permissions.allow` entries for danger: flag any entry that matches the "always prompt" list from Step 4:
+   - `rm`, `rm -rf`, or any destructive delete pattern
+   - `git push` (any remote operation)
+   - `curl`, `wget` to external hosts
+   - `docker push` (registry operations)
+   - Anything touching `~/.ssh`, `~/.aws`, `~/.gnupg`
+   - Database migration commands (`migrate`, `alembic`, `prisma migrate deploy`)
+
+   Flagged entries get red `-` lines in the diff with a `DANGEROUS` label.
+
+3. Compute net-new entries: take the generated list and remove any entry already covered by an existing rule:
    - Skip exact matches
    - Skip entries whose command is already subsumed by a broader existing pattern (e.g. existing `Bash(git:*)` covers `Bash(git diff:*)`)
 
-3. Display a colored diff showing what will be added. Use `+` prefix for new entries and a note for skipped ones:
+4. Display a diff (use a `diff` code block) showing removals, additions, and skipped entries:
 
 ```diff
   permissions.allow (current → proposed)
 
-+ "Bash(git status:*)",     // safe: read-only git
-+ "Bash(git log:*)",        // safe: read-only git
-+ "Bash(git add:*)",        // safe: local git staging
-  "Bash(git diff:*)",       // already present — skipped
+- "Bash(rm:*)",              // DANGEROUS — always prompt; recommend removing
+- "Bash(curl:*)",            // DANGEROUS — always prompt; recommend removing
++ "Bash(git status:*)",      // safe: read-only git
++ "Bash(git add:*)",         // safe: local git staging
+  "Bash(git diff:*)",        // already present — skipped
+
+# withheld (always prompt): git push, rm, curl
 ```
 
-4. Prompt: **`Apply? (yes / no / edit)`**
-   - `yes` — merge net-new entries into `permissions.allow` (no duplicates), write back to `~/.claude/settings.json`
+5. Prompt: **`Apply? (yes / no / edit)`**
+   - `yes` — remove flagged dangerous entries AND merge net-new entries into `permissions.allow` (no duplicates), write back to `~/.claude/settings.json`
    - `no` — leave as-is, done
-   - `edit` — ask: "Which entries do you want to add, remove, or rename?" Accept natural language (e.g. "drop jq, rename the hooks entry to Bash(bash:*)"). Apply the requested changes to the net-new list, re-display the updated diff, then prompt: `Apply? (yes / no)` — no further edit loop.
+   - `edit` — ask: "Which entries do you want to add, remove, or rename?" Accept natural language (e.g. "keep curl, drop git add"). Apply the requested changes to the proposed diff (both additions and removals), re-display the updated diff, then prompt: `Apply? (yes / no)` — no further edit loop.
