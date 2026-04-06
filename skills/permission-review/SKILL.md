@@ -85,10 +85,10 @@ Output the analysis sections followed by a unified diff.
 Use these levels when labeling FRICTION and OVER-PERMISSIVE entries:
 
 **LOW** — read-only, no side effects, no network, no file mutation  
-Examples: `npm test`, `cargo build`, `git log`, `ls`
+Examples: `cargo check`, `git log`, `ls`, `git status`
 
 **MEDIUM** — writes to local state, exposes local ports, or runs scripts with limited blast radius  
-Examples: `docker-compose up`, `npm run build`, `make`, `pip install`
+Examples: `npm test`, `cargo build`, `docker-compose up`, `npm run build`, `make`, `pip install`
 
 **HIGH** — network access, production-touching scripts, broad patterns, credential-adjacent paths  
 Examples: `./deploy.sh`, `psql`, `npm run *` (overly broad), `./scripts/*`
@@ -120,7 +120,7 @@ Display a diff (use a `diff` code block) showing all proposed changes in one vie
 - "Bash(curl:*)",                // over-permissive: never triggered | HIGH risk
 - "Bash(npm run:*)",             // over-permissive: too broad for balanced | MEDIUM risk
 
-# still prompting: git push, rm, curl, docker push
+# still prompting: git push, rm, docker push
 ```
 
 ### Prompt
