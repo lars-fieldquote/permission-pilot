@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PERMISSION_PILOT_TRIGGER=permission \"${CLAUDE_PLUGIN_ROOT}/hooks/log.sh\"",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/log.sh\"",
             "async": true
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PERMISSION_PILOT_TRIGGER=tool_use \"${CLAUDE_PLUGIN_ROOT}/hooks/log.sh\"",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/log.sh\"",
             "async": true
           }
         ]

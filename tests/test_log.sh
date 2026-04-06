@@ -11,8 +11,8 @@ pass() { echo "PASS: $1"; }
 fail() { echo "FAIL: $1" >&2; rm -rf "$FAKE_HOME"; exit 1; }
 
 # --- Test 1: PreToolUse entry is written ---
-printf '{"tool_name":"Bash","tool_input":{"command":"npm install"},"session_id":"sess1","cwd":"/test/myproject"}' \
-  | PERMISSION_PILOT_TRIGGER=tool_use bash "$SCRIPT_DIR/hooks/log.sh"
+printf '{"tool_name":"Bash","tool_input":{"command":"npm install"},"session_id":"sess1","cwd":"/test/myproject","hook_event_name":"PreToolUse"}' \
+  | bash "$SCRIPT_DIR/hooks/log.sh"
 
 [[ -f "$LOG_FILE" ]] || fail "log file not created at $LOG_FILE"
 ENTRY=$(cat "$LOG_FILE")
@@ -26,8 +26,8 @@ echo "$ENTRY" | jq -e '.ts | test("^[0-9]{4}-")'      > /dev/null || fail "ts sh
 pass "PreToolUse entry written with correct fields"
 
 # --- Test 2: PermissionRequest entry is written ---
-printf '{"tool_name":"Bash","tool_input":{"command":"rm -rf dist"},"session_id":"sess2","cwd":"/test/myproject"}' \
-  | PERMISSION_PILOT_TRIGGER=permission bash "$SCRIPT_DIR/hooks/log.sh"
+printf '{"tool_name":"Bash","tool_input":{"command":"rm -rf dist"},"session_id":"sess2","cwd":"/test/myproject","hook_event_name":"PermissionRequest"}' \
+  | bash "$SCRIPT_DIR/hooks/log.sh"
 
 ENTRY=$(tail -1 "$LOG_FILE")
 echo "$ENTRY" | jq -e '.trigger == "permission"' > /dev/null || fail "trigger should be permission"
@@ -48,8 +48,8 @@ pass "All log entries are valid JSON"
 # --- Test 5: Log dir created if missing ---
 FAKE_HOME2=$(mktemp -d)
 export HOME="$FAKE_HOME2"
-printf '{"tool_name":"Bash","tool_input":{"command":"ls"},"session_id":"sess3","cwd":"/test/other"}' \
-  | PERMISSION_PILOT_TRIGGER=tool_use bash "$SCRIPT_DIR/hooks/log.sh"
+printf '{"tool_name":"Bash","tool_input":{"command":"ls"},"session_id":"sess3","cwd":"/test/other","hook_event_name":"PreToolUse"}' \
+  | bash "$SCRIPT_DIR/hooks/log.sh"
 [[ -f "$FAKE_HOME2/.claude/permission-log.jsonl" ]] || fail "log dir not auto-created"
 pass "Log directory auto-created when missing"
 
