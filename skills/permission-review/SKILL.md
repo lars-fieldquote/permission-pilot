@@ -36,7 +36,7 @@ If fewer than 5 unreviewed entries remain after filtering, say: "Not enough log 
 
 ## Step 3: Load current settings
 
-Read `~/.claude/settings.json` (if it does not exist or has no `permissions` key, treat `permissions.allow` as empty). Extract the `permissions.allow` array.
+Read `~/.claude/settings.json` (if it does not exist or has no `permissions` key, start from `{"permissions": {"allow": []}}`). Extract the `permissions.allow` array.
 
 ## Step 4: Identify friction
 
@@ -46,8 +46,8 @@ Group commands by pattern (strip arguments to find the base command, e.g. `npm i
 
 For each pattern with 3+ occurrences that is NOT already in `permissions.allow`:
 - Apply posture filter: would this command be safe to allow at the current posture level?
-  - **loose**: allow anything that isn't in the "always prompt" list below (looser pattern matching — e.g. `npm run *` rather than `npm run test*`)
-  - **balanced**: allow read-only ops and standard build/test commands; prompt for deploy/delete/network
+  - **loose**: allow anything that isn't in the "always prompt" list below, using broad patterns (e.g. `npm run *` not `npm run test*`; `./scripts/*` not `./scripts/build*`; wildcard arguments freely)
+  - **balanced**: allow read-only ops and standard build/test commands using specific patterns (e.g. `npm run test*`, `npm run build*` — not `npm run *`); prompt for deploy/delete/network
   - **hardened**: only suggest allowing strictly read-only commands
 - If safe for posture: add to "Friction" section with count and rationale
 
@@ -62,7 +62,7 @@ For each pattern with 3+ occurrences that is NOT already in `permissions.allow`:
 ## Step 5: Identify over-permissive rules
 
 For each pattern currently in `permissions.allow`:
-- Check if it appears in the last 30 days of logs at all — if not: flag as "never triggered"
+- Check if it appears in the filtered window (default 30 days, or N if `--days N` was passed) — if not: flag as "never triggered"
 - Check if it would be considered risky for the current posture — if so: flag as "risky for your posture"
 
 ## Step 6: Interview for ambiguous patterns
@@ -72,13 +72,13 @@ For any command that is contextually ambiguous (deploy scripts, migration runner
 - "You run `./deploy.sh` regularly — does this ever push to a shared or production environment?"
 - "I see `psql` in your logs — is this always against a local dev database?"
 
-Note: For `hardened` posture, skip ambiguous-pattern questions for deploy scripts and external-facing commands — these always prompt regardless of the answers.
+Note: For `hardened` posture, skip questions about deploy scripts and Docker registries — these commands always prompt regardless of the answers.
 
 Use the answers to move ambiguous patterns into the correct section.
 
 ## Step 7: Output recommendations
 
-```
+```jsonc
 === Permission Review — <project> | Posture: <posture> ===
 
 FRICTION (consider allowing — blocked N times in last 30 days):
