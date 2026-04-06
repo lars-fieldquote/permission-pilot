@@ -14,11 +14,8 @@ Check for posture config in this order (first found wins):
 2. `~/.claude/permission-pilot.json`
 
 If neither exists:
-- Ask: "What security posture do you want for this project? (loose / balanced / hardened)"
-  - **loose**: solo dev, personal project — minimize interruptions, allow most things
-  - **balanced**: reasonable middle ground — allow common safe commands, prompt for risky ones
-  - **hardened**: production system or sensitive data — tight control, prompt for anything non-trivial
-- Save the answer to `~/.claude/permission-pilot.json` as `{"posture": "<answer>", "log_retention_days": 30}`
+- Default to `balanced`, save `{"posture": "balanced", "log_retention_days": 30}` to `~/.claude/permission-pilot.json`
+- Include this note in the output: "No posture config found — defaulting to balanced (saved to `~/.claude/permission-pilot.json`). To change globally, ask: 'set my permission-pilot posture to hardened'. To override for this project only, ask: 'set this project's posture to hardened'."
 
 ## Step 2: Identify the project stack
 
@@ -41,6 +38,8 @@ Before generating the allow-list, ask these questions for contextual commands. A
 - If Docker present: "Is this Docker setup local dev only, or does it push images to a registry?"
 - If database migration files present: "Do migrations run automatically or do you trigger them manually?"
 
+Note: For `hardened` posture, skip questions about deploy scripts and Docker registries — these commands always prompt regardless of the answers.
+
 ## Step 4: Generate the allow-list
 
 Based on stack + posture + interview answers, reason about each command category:
@@ -51,6 +50,7 @@ Based on stack + posture + interview answers, reason about each command category
 - Package manager read operations: `npm list`, `pip list`, `cargo tree`
 
 **Safe for `loose` and `balanced`, prompt for `hardened`:**
+(Note: `loose` and `balanced` use identical allow-rules in this skill. The distinction matters more in `/permission-review` which applies looser pattern matching for `loose` posture.)
 - `npm install`, `pip install`, `cargo build` — dependency installation
 - `npm run <script>`, `make <target>` — project scripts (unless deploy confirmed to touch prod)
 - `docker-compose up`, `docker-compose down` — local containers (if confirmed local-only)
@@ -68,7 +68,7 @@ Based on stack + posture + interview answers, reason about each command category
 
 Output a ready-to-paste block with a comment for each entry explaining why it's allowed:
 
-```json
+```jsonc
 // permission-pilot: generated allow-list
 // Project: <detected stack> | Posture: <posture>
 // Add to ~/.claude/settings.json → permissions.allow
@@ -83,6 +83,6 @@ Output a ready-to-paste block with a comment for each entry explaining why it's 
 ```
 
 Then ask: "Want me to merge this into your `~/.claude/settings.json` now? (yes / show me first / no)"
-- If yes: read `~/.claude/settings.json`, merge the new entries into `permissions.allow` (avoid duplicates), write back
+- If yes: read `~/.claude/settings.json` (if it does not exist or has no `permissions` key, start from `{"permissions": {"allow": []}}`), merge the new entries into `permissions.allow` (avoid duplicates), write back
 - If "show me first": display the full updated permissions block, then ask: "Apply these changes? (yes / no)"
 - If no: leave as-is

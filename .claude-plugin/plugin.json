@@ -1,7 +1,7 @@
 {
   "name": "permission-pilot",
   "description": "Logs Claude Code tool usage and helps you tune a calibrated allow-list via /permission-init and /permission-review",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "Lars Herrmann"
   },
