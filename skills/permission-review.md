@@ -55,6 +55,7 @@ For each pattern with 3+ occurrences that is NOT already in `permissions.allow`:
 - `curl`, `wget` to external hosts
 - `docker push`
 - Anything touching `~/.ssh`, `~/.aws`, `~/.gnupg`
+- Database migration commands (`./migrate.sh`, `alembic upgrade`, `prisma migrate deploy`)
 
 ## Step 5: Identify over-permissive rules
 
@@ -92,7 +93,7 @@ READY-TO-PASTE — updated permissions.allow:
 
 Then ask: "Apply these changes to `~/.claude/settings.json`? (yes / show me first / no)"
 - If yes: read `~/.claude/settings.json`, apply adds and removes, write back
-- If "show me first": display the full updated file, then ask again
+- If "show me first": display the full updated file, then ask: "Apply these changes? (yes / no)"
 - If no: leave as-is
 
 ## Step 8: Mark entries as reviewed

@@ -84,5 +84,5 @@ Output a ready-to-paste block with a comment for each entry explaining why it's 
 
 Then ask: "Want me to merge this into your `~/.claude/settings.json` now? (yes / show me first / no)"
 - If yes: read `~/.claude/settings.json`, merge the new entries into `permissions.allow` (avoid duplicates), write back
-- If "show me first": display the full updated permissions block, then ask again
+- If "show me first": display the full updated permissions block, then ask: "Apply these changes? (yes / no)"
 - If no: leave as-is
