@@ -64,25 +64,43 @@ Based on stack + posture + interview answers, reason about each command category
 - Any command touching `~/.ssh`, `~/.aws`, `~/.gnupg`
 - Database migration commands (`./migrate.sh`, `alembic upgrade`, `prisma migrate deploy`)
 
-## Step 5: Output the allow-list
+**Pattern convention:** All generated entries must use `Bash(<command>:*)` colon syntax (e.g. `Bash(git status:*)` not `Bash(git status*)`).
 
-Output a ready-to-paste block with a comment for each entry explaining why it's allowed:
+## Step 5: Show diff and apply
 
-```jsonc
-// permission-pilot: generated allow-list
-// Project: <detected stack> | Posture: <posture>
-// Add to ~/.claude/settings.json → permissions.allow
-[
-  "Bash(git status*)",     // safe: read-only git
-  "Bash(git diff*)",       // safe: read-only git
-  "Bash(npm install*)",    // safe: dependency installation
-  "Bash(npm run test*)",   // safe: test runner
-  ...
-]
-// Still prompting: rm*, git push*, curl*, docker push*
+1. Read `~/.claude/settings.json`. If it does not exist or has no `permissions` key, start from `{"permissions": {"allow": []}}`.
+
+2. Scan existing `permissions.allow` entries for danger: flag any entry that matches the "always prompt" list from Step 4:
+   - `rm` or `rm -rf` (any invocation of `rm`), or any destructive delete pattern
+   - `git push` (any remote operation)
+   - `curl`, `wget` to external hosts
+   - `docker push` (registry operations)
+   - Anything touching `~/.ssh`, `~/.aws`, `~/.gnupg`
+   - Database migration commands (`./migrate.sh`, `alembic upgrade`, `prisma migrate deploy`)
+
+   Flagged entries get red `-` lines in the diff with a `DANGEROUS` label.
+
+3. Compute net-new entries: take the generated list and remove any entry already covered by an existing rule:
+   - Skip exact matches
+   - Skip entries whose command is already subsumed by a broader existing pattern (e.g. existing `Bash(git:*)` covers `Bash(git diff:*)`)
+
+4. Display a diff (use a `diff` code block) showing removals, additions, and skipped entries:
+
+```diff
+  permissions.allow (current → proposed)
+
+- "Bash(rm:*)",              // DANGEROUS — always prompt; recommend removing
+- "Bash(curl:*)",            // DANGEROUS — always prompt; recommend removing
++ "Bash(git status:*)",      // safe: read-only git
++ "Bash(git add:*)",         // safe: local git staging
+  "Bash(git diff:*)",        // already present — skipped
+
+# withheld (always prompt): git push, rm, curl
 ```
 
-Then ask: "Want me to merge this into your `~/.claude/settings.json` now? (yes / show me first / no)"
-- If yes: read `~/.claude/settings.json` (if it does not exist or has no `permissions` key, start from `{"permissions": {"allow": []}}`), merge the new entries into `permissions.allow` (avoid duplicates), write back
-- If "show me first": display the full updated permissions block, then ask: "Apply these changes? (yes / no)"
-- If no: leave as-is
+If an entry is both flagged as dangerous AND appears in the generated allow-list, show only the `-` DANGEROUS line — do not re-add it as a `+` line.
+
+5. Prompt: **`Apply? (yes / no / edit)`**
+   - `yes` — remove flagged dangerous entries AND merge net-new entries into `permissions.allow` (no duplicates), write back to `~/.claude/settings.json`
+   - `no` — leave as-is, done
+   - `edit` — ask: "Which entries do you want to add, remove, or rename?" Accept natural language (e.g. "keep curl, drop git add"). Apply the requested changes to the proposed diff (both additions and removals), re-display the updated diff, then prompt: `Apply? (yes / no)` — no further edit loop. If the user chooses to keep a flagged entry, remove its DANGEROUS line from the diff and treat it as an unchanged context line.
