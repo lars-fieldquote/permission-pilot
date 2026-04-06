@@ -71,7 +71,7 @@ Based on stack + posture + interview answers, reason about each command category
 1. Read `~/.claude/settings.json`. If it does not exist or has no `permissions` key, start from `{"permissions": {"allow": []}}`.
 
 2. Scan existing `permissions.allow` entries for danger: flag any entry that matches the "always prompt" list from Step 4:
-   - `rm`, `rm -rf`, or any destructive delete pattern
+   - `rm` or `rm -rf` (any invocation of `rm`), or any destructive delete pattern
    - `git push` (any remote operation)
    - `curl`, `wget` to external hosts
    - `docker push` (registry operations)
