@@ -64,25 +64,28 @@ Based on stack + posture + interview answers, reason about each command category
 - Any command touching `~/.ssh`, `~/.aws`, `~/.gnupg`
 - Database migration commands (`./migrate.sh`, `alembic upgrade`, `prisma migrate deploy`)
 
-## Step 5: Output the allow-list
+## Step 5: Show diff and apply
 
-Output a ready-to-paste block with a comment for each entry explaining why it's allowed:
+1. Read `~/.claude/settings.json`. If it does not exist or has no `permissions` key, start from `{"permissions": {"allow": []}}`.
 
-```jsonc
-// permission-pilot: generated allow-list
-// Project: <detected stack> | Posture: <posture>
-// Add to ~/.claude/settings.json → permissions.allow
-[
-  "Bash(git status*)",     // safe: read-only git
-  "Bash(git diff*)",       // safe: read-only git
-  "Bash(npm install*)",    // safe: dependency installation
-  "Bash(npm run test*)",   // safe: test runner
-  ...
-]
-// Still prompting: rm*, git push*, curl*, docker push*
+2. Compute net-new entries: take the generated list and remove any entry already covered by an existing rule:
+   - Skip exact matches
+   - Skip entries whose command is already subsumed by a broader existing pattern (e.g. existing `Bash(git:*)` covers `Bash(git diff:*)`)
+
+3. Display a colored diff showing what will be added. Use `+` prefix for new entries and a note for skipped ones:
+
+```diff
+  permissions.allow (current → proposed)
+
++ "Bash(git status:*)",     // safe: read-only git
++ "Bash(git log:*)",        // safe: read-only git
++ "Bash(git add:*)",        // safe: local git staging
+  "Bash(git diff:*)",       // already present — skipped
 ```
 
-Then ask: "Want me to merge this into your `~/.claude/settings.json` now? (yes / show me first / no)"
-- If yes: read `~/.claude/settings.json` (if it does not exist or has no `permissions` key, start from `{"permissions": {"allow": []}}`), merge the new entries into `permissions.allow` (avoid duplicates), write back
-- If "show me first": display the full updated permissions block, then ask: "Apply these changes? (yes / no)"
-- If no: leave as-is
+4. Prompt: **`Apply? (yes / no / edit)`**
+   - `yes` — merge net-new entries into `permissions.allow` (no duplicates), write back to `~/.claude/settings.json`
+   - `no` — leave as-is, done
+   - `edit` — ask: "Which entries do you want to add, remove, or rename?" Accept natural language (e.g. "drop jq, rename the hooks entry to Bash(bash:*)"). Apply the requested changes to the net-new list, re-display the updated diff, then prompt: `Apply? (yes / no)` — no further edit loop.
+
+**Pattern convention:** All generated entries use `Bash(<command>:*)` colon syntax (e.g. `Bash(git status:*)` not `Bash(git status*)`). This matches the precision of typical existing entries and scopes the rule to the subcommand.
